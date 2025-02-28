@@ -1,6 +1,6 @@
-import { Link } from "react-router";
+import { Link } from 'react-router'; //comment
 
-export default function Header() {
+const Header = () => {
   return (
     <header className="header">
       <Link to="/" className="logo">
@@ -20,4 +20,6 @@ export default function Header() {
       </div>
     </header>
   );
-}
+};
+
+export default Header;

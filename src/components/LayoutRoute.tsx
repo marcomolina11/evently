@@ -1,11 +1,13 @@
-import { Outlet } from "react-router";
-import Header from "./Header.tsx";
+import { Outlet } from 'react-router';
+import Header from './Header.tsx';
 
-export default function LayoutRoute() {
+const LayoutRoute = () => {
   return (
     <>
       <Header />
       <Outlet />
     </>
   );
-}
+};
+
+export default LayoutRoute;
