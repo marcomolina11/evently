@@ -88,6 +88,14 @@ header {
   width: 200px;
 }
 
-p.error {
+.error {
   color: red;
+}
+li.error {
+  font-size: 0.75rem;
+}
+ul.error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }

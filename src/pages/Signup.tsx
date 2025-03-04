@@ -1,27 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
 import { emptyFormData, SignupFormData } from '../types/auth';
+import { usePasswordValidation } from '../hooks/usePasswordValidation';
 
 const Signup = () => {
   const [formData, setFormData] = useState<SignupFormData>(emptyFormData);
   const [isFormError, setIsFormError] = useState(false);
   const { setUser } = useAuth();
   const navigate = useNavigate();
-  const [confirmationError, setConfirmationError] = useState<string | null>(
-    null
-  );
 
-  useEffect(() => {
-    if (
-      formData.passwordConfirmation !== '' &&
-      formData.password !== formData.passwordConfirmation
-    ) {
-      setConfirmationError('Passwords do not match');
-    } else {
-      setConfirmationError(null);
-    }
-  }, [formData]);
+  const passwordErrors = usePasswordValidation(
+    formData.password,
+    formData.passwordConfirmation
+  );
 
   function saveFormData(
     event:
@@ -29,6 +21,7 @@ const Signup = () => {
       | React.ChangeEvent<HTMLSelectElement>
   ) {
     setIsFormError(false);
+
     setFormData((prevData) => {
       return {
         ...prevData,
@@ -135,7 +128,15 @@ const Signup = () => {
             onChange={(event) => saveFormData(event)}
           />
         </div>
-        {confirmationError && <p>{confirmationError}</p>}
+        {passwordErrors.length > 0 && (
+          <ul className="error">
+            {passwordErrors.map((error, index) => (
+              <li key={index} className="error">
+                {error}
+              </li>
+            ))}
+          </ul>
+        )}
         <button>Register</button>
       </form>
     </div>
