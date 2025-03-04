@@ -1,6 +1,15 @@
-import { Link } from 'react-router'; //comment
+import { Link, useNavigate } from 'react-router';
+import { useAuth } from '../hooks/useAuth';
 
 const Header = () => {
+  const { user, setUser } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    setUser(null);
+    navigate('/login');
+  }
+
   return (
     <header className="header">
       <Link to="/" className="logo">
@@ -10,14 +19,20 @@ const Header = () => {
       <nav className="header--nav">
         <Link to="/events">Events</Link>
       </nav>
-      <div>
-        <Link to="/login">
-          <button>Log in</button>
-        </Link>
-        <Link to="/signup">
-          <button>Sign up</button>
-        </Link>
-      </div>
+      {user ? (
+        <div>
+          <button onClick={handleLogout}>Log out</button>
+        </div>
+      ) : (
+        <div>
+          <Link to="/login">
+            <button>Log in</button>
+          </Link>
+          <Link to="/signup">
+            <button>Sign up</button>
+          </Link>
+        </div>
+      )}
     </header>
   );
 };
