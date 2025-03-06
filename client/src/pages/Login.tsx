@@ -2,29 +2,54 @@ import { useState } from 'react';
 import { LoginFormData } from '../types/auth';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
+import { User } from '@evently/shared';
 
 const Login = () => {
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
   });
+  const [serverErrors, setServerErrors] = useState<string[]>([]);
 
   const navigate = useNavigate();
   const { setUser } = useAuth();
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    // make http call to validate user
-    // if success
-    setUser({ firstName: formData.email });
-    setFormData({ email: '', password: '' });
+    try {
+      const response = await fetch('http://localhost:3000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-    //wrapping in setTimeout to solve StrictMode redirect loop
-    setTimeout(() => navigate('/events'), 0);
+      if (!response.ok) {
+        throw new Error('Response was not ok');
+      }
+
+      const data: { data: Omit<User, 'password'>; message: string } =
+        await response.json();
+
+      if (data.message) {
+        setServerErrors((prevErrors) => [...prevErrors, data.message]);
+      } else {
+        // if success
+        setUser(data.data);
+        setFormData({ email: '', password: '' });
+
+        //wrapping in setTimeout to solve StrictMode redirect loop
+        setTimeout(() => navigate('/events'), 0);
+      }
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setServerErrors([]);
     setFormData((prevData) => ({
       ...prevData,
       [event.target.name]: event.target.value,
@@ -33,6 +58,12 @@ const Login = () => {
 
   return (
     <div>
+      {serverErrors &&
+        serverErrors.map((error, index) => (
+          <p className="error" key={index}>
+            {error}
+          </p>
+        ))}
       <form className="form--signup" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="email">Email</label>
@@ -42,6 +73,7 @@ const Login = () => {
             name="email"
             value={formData.email}
             onChange={(e) => handleChange(e)}
+            required
           />
         </div>
         <div>
@@ -52,6 +84,7 @@ const Login = () => {
             name="password"
             value={formData.password}
             onChange={(e) => handleChange(e)}
+            required
           />
         </div>
         <button>Login</button>

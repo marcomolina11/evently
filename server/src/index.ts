@@ -1,8 +1,9 @@
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
 import { connectDB } from './db';
 import { User } from '@evently/shared';
-import dotenv from 'dotenv';
+import { UserDocument } from './schemas/UserDocument';
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ app.get('/', async (req, res) => {
   res.json(users);
 });
 
-// Create User
+// Create/Signup User
 app.post('/users', async (req, res) => {
   const db = await connectDB();
   const collection = db.collection('users');
@@ -32,7 +33,7 @@ app.post('/users', async (req, res) => {
 
   const emailExists = await collection.findOne({ email: user.email });
 
-  let responseObject = {
+  let responseObject:{message: string, data: object} = {
     message: '',
     data: {},
   };
@@ -46,14 +47,47 @@ app.post('/users', async (req, res) => {
     const options = {
       projection: { password: 0 },
     };
-    const createdUser = await collection.findOne(result.insertedId, options);
+    const createdUser: UserDocument | null =
+      await collection.findOne<UserDocument>(result.insertedId, options);
 
-    responseObject = {
-      ...responseObject,
-      data: JSON.parse(JSON.stringify(createdUser)),
-    };
+    if (createdUser) {
+      responseObject = {
+        ...responseObject,
+        data: createdUser,
+      };
+    }
     res.status(200).json(responseObject);
   }
+});
+
+// Login User
+app.post('/login', async (req, res) => {
+  const db = await connectDB();
+  const collection = db.collection('users');
+  const { email, password }: { email: string; password: string } = req.body;
+
+  const user: UserDocument | null = await collection.findOne<UserDocument>({
+    email: email,
+  });
+
+  let responseObject:{message: string, data: object} = {
+    message: '',
+    data: {},
+  }
+
+  // check is a user was found
+  if (user && user.password === password) {
+    responseObject = {
+      ...responseObject,
+      data: user,
+    };
+  } else {
+    responseObject = {
+      ...responseObject,
+      message: 'Incorrect email or password',
+    };
+  }
+  res.status(200).json(responseObject);
 });
 
 app.listen(PORT, () => {
