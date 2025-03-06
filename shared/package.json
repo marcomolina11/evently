@@ -1,0 +1,8 @@
+{
+  "name": "@evently/shared",
+  "version": "1.0.0",
+  "description": "Shared types for Evently",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "private": true
+}

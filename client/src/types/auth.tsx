@@ -1,10 +1,8 @@
-export type User = {
-  firstName: string;
-} | null;
+import { User } from "@evently/shared";
 
 export type AuthContextType = {
-  user: User | null;
-  setUser: (user: User | null) => void;
+  user: Omit<User, 'password'> | null;
+  setUser: (user: Omit<User, 'password'> | null) => void;
 } | null;
 
 export type SignupFormData = {

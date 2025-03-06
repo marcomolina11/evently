@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
 import { emptyFormData, SignupFormData } from '../types/auth';
 import { usePasswordValidation } from '../hooks/usePasswordValidation';
+import { User } from '@evently/shared';
 
 const Signup = () => {
   const [formData, setFormData] = useState<SignupFormData>(emptyFormData);
@@ -36,16 +37,33 @@ const Signup = () => {
     return !isError;
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    console.log(formData);
-
     const isFormDataValid = validateFormData();
 
     if (isFormDataValid) {
-      //TODO: make api call to create a new user
+      const { passwordConfirmation: _, ...payload } = formData;
+      void _;
+      try {
+        const response = await fetch('http://localhost:3000/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
 
-      setUser({ firstName: formData.firstName });
+        if (!response.ok) {
+          throw new Error('Response was not ok');
+        }
+
+        const data: Omit<User, 'password'> = await response.json();
+        console.log(data);
+        setUser(data);
+      } catch (error) {
+        console.error(error);
+      }
+
       setFormData(emptyFormData);
 
       //wrapping in setTimeout to solve StrictMode redirect loop

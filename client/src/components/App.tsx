@@ -6,21 +6,21 @@ import LayoutRoute from './LayoutRoute.tsx';
 import Login from '../pages/Login.tsx';
 import Signup from '../pages/Signup.tsx';
 import { AuthContext } from '../context/AuthContext.tsx';
-import { User } from '../types/auth.tsx';
+import { User } from '@evently/shared';
 
 const App = () => {
-  const [user, setUser] = useState<User>(() => {
-    const storedUser = localStorage.getItem('user')
-    return storedUser ? JSON.parse(storedUser) : null
+  const [user, setUser] = useState<Omit<User, 'password'> | null>(() => {
+    const storedUser = localStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
   });
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem('user', JSON.stringify(user))
+      localStorage.setItem('user', JSON.stringify(user));
     } else {
-      localStorage.removeItem('user')
+      localStorage.removeItem('user');
     }
-  }, [user])
+  }, [user]);
 
   return (
     <>
