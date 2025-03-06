@@ -20,19 +20,40 @@ app.get('/', async (req, res) => {
   res.json(users);
 });
 
+// Create User
 app.post('/users', async (req, res) => {
   const db = await connectDB();
   const collection = db.collection('users');
   const user: Omit<User, '_id'> = req.body;
 
-  const result = await collection.insertOne(user);
+  // check if there's a user with that email already in DB
+  // if true, send back a message saying that email already exists
+  // else, create the user
 
-  const createdUser = await collection.findOne(result.insertedId);
+  const emailExists = await collection.findOne({ email: user.email });
 
-  const userObject = JSON.parse(JSON.stringify(createdUser));
-  const { password, ...safeUser } = userObject;
+  let responseObject = {
+    message: '',
+    data: {},
+  };
 
-  res.json(safeUser);
+  if (emailExists) {
+    responseObject = { ...responseObject, message: 'Email already exists' };
+    res.json(responseObject);
+  } else {
+    const result = await collection.insertOne(user);
+
+    const options = {
+      projection: { password: 0 },
+    };
+    const createdUser = await collection.findOne(result.insertedId, options);
+
+    responseObject = {
+      ...responseObject,
+      data: JSON.parse(JSON.stringify(createdUser)),
+    };
+    res.status(200).json(responseObject);
+  }
 });
 
 app.listen(PORT, () => {

@@ -8,6 +8,7 @@ import { User } from '@evently/shared';
 const Signup = () => {
   const [formData, setFormData] = useState<SignupFormData>(emptyFormData);
   const [isFormError, setIsFormError] = useState(false);
+  const [serverErrors, setServerErrors] = useState<string[]>([]);
   const { setUser } = useAuth();
   const navigate = useNavigate();
 
@@ -22,6 +23,7 @@ const Signup = () => {
       | React.ChangeEvent<HTMLSelectElement>
   ) {
     setIsFormError(false);
+    setServerErrors([]);
 
     setFormData((prevData) => {
       return {
@@ -57,23 +59,34 @@ const Signup = () => {
           throw new Error('Response was not ok');
         }
 
-        const data: Omit<User, 'password'> = await response.json();
-        console.log(data);
-        setUser(data);
+        const data: { data: Omit<User, 'password'> | null; message: string } =
+          await response.json();
+        console.log('Response data: ', data);
+
+        if (data.message) {
+          setServerErrors((prevErrors) => [...prevErrors, data.message]);
+          return;
+        } else {
+          setUser(data.data);
+          setFormData(emptyFormData);
+          //wrapping in setTimeout to solve StrictMode redirect loop
+          setTimeout(() => navigate('/events'), 0);
+        }
       } catch (error) {
         console.error(error);
       }
-
-      setFormData(emptyFormData);
-
-      //wrapping in setTimeout to solve StrictMode redirect loop
-      setTimeout(() => navigate('/events'), 0);
     }
   }
 
   return (
     <div>
       {isFormError && <p className="error">All fields are required</p>}
+      {serverErrors &&
+        serverErrors.map((error, index) => (
+          <p className="error" key={index}>
+            {error}
+          </p>
+        ))}
       <form className="form--signup" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="firstName">First Name</label>
