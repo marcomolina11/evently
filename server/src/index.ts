@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { connectDB } from './db';
 import { User } from '@evently/shared';
 import { UserDocument } from './schemas/UserDocument';
+import { ObjectId } from 'mongodb';
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
 
+// Get All Users
 app.get('/', async (req, res) => {
   const db = await connectDB();
   const collection = db.collection('users');
@@ -33,7 +35,7 @@ app.post('/users', async (req, res) => {
 
   const emailExists = await collection.findOne({ email: user.email });
 
-  let responseObject:{message: string, data: object} = {
+  let responseObject: { message: string; data: object } = {
     message: '',
     data: {},
   };
@@ -70,10 +72,10 @@ app.post('/login', async (req, res) => {
     email: email,
   });
 
-  let responseObject:{message: string, data: object} = {
+  let responseObject: { message: string; data: object } = {
     message: '',
     data: {},
-  }
+  };
 
   // check is a user was found
   if (user && user.password === password) {
@@ -92,4 +94,38 @@ app.post('/login', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
+});
+
+// Get All Events
+app.post('/events', async (req, res) => {
+  const db = await connectDB();
+  const collection = db.collection('events');
+
+  const loggedInUser = req.body;
+
+  if (loggedInUser) {
+    const cursor = collection.find({ state: loggedInUser.state });
+    const userEvents = await cursor.toArray();
+
+    res.json(userEvents);
+  }
+});
+
+// Create Event
+app.post('/create-event', async (req, res) => {
+  const db = await connectDB();
+  const collection = db.collection('events');
+
+  if (req.body && req.body.hosts) {
+    const eventData = {
+      ...req.body,
+      hosts: req.body.hosts.map((id: string) => new ObjectId(id)),
+    };
+
+    const createdEvent = await collection.insertOne(eventData);
+
+    res.json(createdEvent.insertedId);
+  } else {
+    throw new Error('Event hosts are missing');
+  }
 });

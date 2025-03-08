@@ -7,6 +7,7 @@ import Login from '../pages/Login.tsx';
 import Signup from '../pages/Signup.tsx';
 import { AuthContext } from '../context/AuthContext.tsx';
 import { User } from '@evently/shared';
+import CreateEvent from '../pages/CreateEvent.tsx';
 
 const App = () => {
   const [user, setUser] = useState<Omit<User, 'password'> | null>(() => {
@@ -32,6 +33,7 @@ const App = () => {
               <Route path="/events" element={<Events />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/create-event" element={<CreateEvent />} />
             </Route>
           </Routes>
         </BrowserRouter>

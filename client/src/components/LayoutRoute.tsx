@@ -5,7 +5,9 @@ const LayoutRoute = () => {
   return (
     <>
       <Header />
-      <Outlet />
+      <main className='page-content-wrapper'>
+        <Outlet />
+      </main>
     </>
   );
 };

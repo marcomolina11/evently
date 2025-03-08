@@ -135,8 +135,8 @@ const Signup = () => {
             onChange={(event) => saveFormData(event)}
           >
             <option value=""></option>
-            <option value="ca">CA</option>
-            <option value="fl">FL</option>
+            <option value="CA">CA</option>
+            <option value="FL">FL</option>
           </select>
         </div>
         <div>
