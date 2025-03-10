@@ -123,6 +123,11 @@ ul.error {
   width: 80%;
 }
 
+.event-card-wrapper {
+  text-decoration: none;
+  color: black;
+}
+
 .event-card {
   border: 1px solid #ebebeb;
   border-radius: 8px;
@@ -139,4 +144,18 @@ ul.error {
   font-size: 1rem;
   margin: 0;
   margin-bottom: 10px;
+}
+
+.event-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.event-details p {
+  margin: 0;
+}
+
+.event-description {
+  text-align: left;
+  margin-bottom: 20px;
 }

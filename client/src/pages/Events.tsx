@@ -9,7 +9,7 @@ type Event = {
   city: string;
   state: string;
   hosts: string[];
-  atendees: string[];
+  attendees: string[];
 };
 
 const Events = () => {
@@ -45,14 +45,16 @@ const Events = () => {
 
   const eventElements = events.map((event) => {
     return (
-      <div key={event._id} className="event-card">
-        <h3>{event.name}</h3>
-        <p>March, 8, 6:00 PM</p>
-        <p>
-          {event.city}, {event.state}
-        </p>
-        <p>Hosted by Marco Molina</p>
-      </div>
+      <Link to={`/events/${event._id}`} key={event._id} className='event-card-wrapper'>
+        <div className="event-card">
+          <h3>{event.name}</h3>
+          <p>March, 8, 6:00 PM</p>
+          <p>
+            {event.city}, {event.state}
+          </p>
+          <p>Hosted by Marco Molina</p>
+        </div>
+      </Link>
     );
   });
 
