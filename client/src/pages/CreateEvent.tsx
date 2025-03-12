@@ -13,7 +13,6 @@ type FormData = {
 const CreateEvent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  //const apiKey = 'AIzaSyAH3mO1i-S_fR87LhWryk6YWGq3RB9yz2o';
 
   useEffect(() => {
     if (!user) {
