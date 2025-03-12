@@ -80,20 +80,26 @@ header {
   display: flex;
   flex-direction: column;
   margin: 0 auto;
-  width: 500px;
-  align-items: center;
+  width: 400px;
+  gap: 15px;
 }
 
 .form--signup label {
-  margin: 0 10px;
+  text-align: left;
 }
 
 .form--signup div {
   padding: 5px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.form--signup input {
+  width: 75%;
 }
 
 .form--signup button {
-  width: 200px;
+  width: 100%;
 }
 
 .error {
