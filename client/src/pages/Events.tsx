@@ -45,10 +45,14 @@ const Events = () => {
 
   const eventElements = events.map((event) => {
     return (
-      <Link to={`/events/${event._id}`} key={event._id} className='event-card-wrapper'>
+      <Link
+        to={`/events/${event._id}`}
+        key={event._id}
+        className="event-card-wrapper"
+      >
         <div className="event-card">
           <h3>{event.name}</h3>
-          <p>March, 8, 6:00 PM</p>
+          <p>{formatDate(event.date)}</p>
           <p>
             {event.city}, {event.state}
           </p>
@@ -57,6 +61,16 @@ const Events = () => {
       </Link>
     );
   });
+
+  function formatDate(dateString: string): string {
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(date);
+  }
 
   return (
     <>

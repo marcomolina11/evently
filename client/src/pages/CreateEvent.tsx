@@ -13,6 +13,7 @@ type FormData = {
 const CreateEvent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  //const apiKey = 'AIzaSyAH3mO1i-S_fR87LhWryk6YWGq3RB9yz2o';
 
   useEffect(() => {
     if (!user) {
@@ -20,14 +21,18 @@ const CreateEvent = () => {
     }
   }, [user, navigate]);
 
+  const today = new Date().toISOString().split('T')[0];
+
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [formData, setFormData] = useState<FormData>({
     name: '',
-    date: '',
+    date: today,
     city: '',
     state: '',
     hosts: [user ? user._id : ''],
   });
+
+  //console.log(formData);
 
   function saveFormData(
     event:
@@ -63,7 +68,7 @@ const CreateEvent = () => {
 
       setFormData({
         name: '',
-        date: '',
+        date: today,
         city: '',
         state: '',
         hosts: [],
@@ -96,12 +101,13 @@ const CreateEvent = () => {
         <div>
           <label htmlFor="date">Date</label>
           <input
-            type="text"
+            type="date"
             id="date"
             name="date"
             value={formData.date}
             onChange={(event) => saveFormData(event)}
             required
+            min={today}
           />
         </div>
         <div className="form--location">

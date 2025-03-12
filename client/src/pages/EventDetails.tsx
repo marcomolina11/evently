@@ -48,39 +48,51 @@ const EventDetails = () => {
     return `${host.firstName} ${host.lastName}`;
   });
 
+  function formatDate(dateString: string): string {
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(date);
+  }
+
   return (
     <>
-      <section className="event-details">
-        <div className="event-description">
-          <h2>{event?.name}</h2>
-          <p>{event?.date} format as date</p>
-          <p>
-            {event?.city}, {event?.state}
-          </p>
-          <p>Hosted by {hosts}</p>
-          <p>Attendees: {event?.attendees.length}</p>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>City</th>
-              <th>State</th>
-            </tr>
-          </thead>
-          <tbody>
-            {event?.attendeesUserDetails?.map((attendee) => (
-              <tr key={attendee._id}>
-                <td>
-                  {attendee.firstName} {attendee.lastName}
-                </td>
-                <td>{attendee.city}</td>
-                <td>{attendee.state}</td>
+      {event && (
+        <section className="event-details">
+          <div className="event-description">
+            <h2>{event.name}</h2>
+            <p>{formatDate(event.date)}</p>
+            <p>
+              {event.city}, {event.state}
+            </p>
+            <p>Hosted by {hosts}</p>
+            <p>Attendees: {event?.attendees.length}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>City</th>
+                <th>State</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+            </thead>
+            <tbody>
+              {event?.attendeesUserDetails?.map((attendee) => (
+                <tr key={attendee._id}>
+                  <td>
+                    {attendee.firstName} {attendee.lastName}
+                  </td>
+                  <td>{attendee.city}</td>
+                  <td>{attendee.state}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
     </>
   );
 };
