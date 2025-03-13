@@ -1,16 +1,66 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
 import { emptyFormData, SignupFormData } from '../types/auth';
 import { usePasswordValidation } from '../hooks/usePasswordValidation';
 import { User } from '@evently/shared';
 
-const Signup = () => {
+type SignupProps = {
+  isGoogleLoaded: boolean;
+};
+
+const Signup: React.FC<SignupProps> = ({ isGoogleLoaded }) => {
   const [formData, setFormData] = useState<SignupFormData>(emptyFormData);
   const [isFormError, setIsFormError] = useState(false);
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const { setUser } = useAuth();
   const navigate = useNavigate();
+  const locationInputRef = useRef(null);
+
+  useEffect(() => {
+    if (window.google && window.google.maps && window.google.maps.places) {
+      initAutocomplete();
+    }
+  }, [isGoogleLoaded]);
+
+  function initAutocomplete() {
+    if (!locationInputRef.current) return;
+
+    const autocomplete = new window.google.maps.places.Autocomplete(
+      locationInputRef.current,
+      {
+        types: ['(cities)'],
+      }
+    );
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry || !place.formatted_address) {
+        console.log('No details available for the selected location');
+        return;
+      }
+
+      const stateComponent = place.address_components?.find((component) =>
+        component.types.includes('administrative_area_level_1')
+      );
+      const cityComponent = place.address_components?.find((component) =>
+        component.types.includes('locality')
+      );
+
+      const stateName = stateComponent ? stateComponent.short_name : '';
+      const cityName = cityComponent ? cityComponent.long_name : '';
+
+      setFormData((prevData) => {
+        return {
+          ...prevData,
+          location: {
+            city: cityName,
+            state: stateName,
+          },
+        };
+      });
+    });
+  }
 
   const passwordErrors = usePasswordValidation(
     formData.password,
@@ -61,7 +111,6 @@ const Signup = () => {
 
         const data: { data: Omit<User, 'password'> | null; message: string } =
           await response.json();
-        console.log('Response data: ', data);
 
         if (data.message) {
           setServerErrors((prevErrors) => [...prevErrors, data.message]);
@@ -118,26 +167,14 @@ const Signup = () => {
             onChange={(event) => saveFormData(event)}
           />
         </div>
-        <div className="form--location">
-          <label htmlFor="city">City</label>
+        <div>
+          <label htmlFor="location">Location</label>
           <input
             type="text"
-            id="city"
-            name="city"
-            value={formData.city}
-            onChange={(event) => saveFormData(event)}
+            ref={locationInputRef}
+            name="location"
+            id="location"
           />
-          <label htmlFor="state">State</label>
-          <select
-            id="state"
-            name="state"
-            value={formData.state}
-            onChange={(event) => saveFormData(event)}
-          >
-            <option value=""></option>
-            <option value="CA">CA</option>
-            <option value="FL">FL</option>
-          </select>
         </div>
         <div>
           <label htmlFor="password">Password</label>

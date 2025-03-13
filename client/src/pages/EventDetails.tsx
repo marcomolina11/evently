@@ -88,8 +88,8 @@ const EventDetails = () => {
                   <td>
                     {attendee.firstName} {attendee.lastName}
                   </td>
-                  <td>{attendee.city}</td>
-                  <td>{attendee.state}</td>
+                  <td>{attendee.location && attendee.location.city}</td>
+                  <td>{attendee.location && attendee.location.state}</td>
                 </tr>
               ))}
             </tbody>

@@ -13,7 +13,11 @@ type FormData = {
   };
 };
 
-const CreateEvent: React.FC = () => {
+type CreateEventProps = {
+  isGoogleLoaded: boolean;
+};
+
+const CreateEvent: React.FC<CreateEventProps> = ({ isGoogleLoaded }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const locationInputRef = useRef<HTMLInputElement | null>(null);
@@ -25,39 +29,13 @@ const CreateEvent: React.FC = () => {
   }, [user, navigate]);
 
   useEffect(() => {
-    // Check if already loaded
-    if (window.google) {
-      console.log('window.google exists');
+    if (window.google && window.google.maps && window.google.maps.places) {
       initAutocomplete();
-      return;
     }
-
-    // Check if script already exists
-    if (!document.querySelector("script[src*='maps.googleapis.com']")) {
-      // Define global callback function
-      window.initAutocomplete = initAutocomplete;
-
-      // Load script with callback
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${
-        import.meta.env.VITE_GOOGLE_API_KEY
-      }&libraries=places&callback=initAutocomplete&loading=async`;
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
-    }
-  }, []);
+  }, [isGoogleLoaded]);
 
   function initAutocomplete() {
-    if (
-      !window.google ||
-      !window.google.maps ||
-      !window.google.maps.places ||
-      !locationInputRef.current
-    ) {
-      console.error('Google Places API not loaded.');
-      return;
-    }
+    if (!locationInputRef.current) return;
 
     const autocomplete = new window.google.maps.places.Autocomplete(
       locationInputRef.current
@@ -90,8 +68,6 @@ const CreateEvent: React.FC = () => {
           },
         };
       });
-
-      console.log('Selected Place Complete:', place);
     });
   }
 
@@ -108,8 +84,6 @@ const CreateEvent: React.FC = () => {
       formattedAddress: '',
     },
   });
-
-  console.log(formData);
 
   function saveFormData(
     event:
@@ -160,6 +134,7 @@ const CreateEvent: React.FC = () => {
       }
 
       //wrapping in setTimeout to solve StrictMode redirect loop
+      // TODO: navigate to the eventDetails page instead
       setTimeout(() => navigate('/events'), 0);
 
       // TODO: redirect to event details page instead of all events page

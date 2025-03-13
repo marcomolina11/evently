@@ -18,24 +18,11 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
 });
 
-// Get All Users
-app.get('/', async (req, res) => {
-  const db = await connectDB();
-  const collection = db.collection('users');
-
-  const users = await collection.find().toArray();
-  res.json(users);
-});
-
 // Create/Signup User
 app.post('/users', async (req, res) => {
   const db = await connectDB();
   const collection = db.collection('users');
   const user: Omit<User, '_id'> = req.body;
-
-  // check if there's a user with that email already in DB
-  // if true, send back a message saying that email already exists
-  // else, create the user
 
   const emailExists = await collection.findOne({ email: user.email });
 
@@ -101,12 +88,11 @@ app.post('/events', async (req, res) => {
   const db = await connectDB();
   const collection = db.collection('events');
 
-  const loggedInUser = req.body;
+  const loggedInUser: Omit<User, 'password'> | null = req.body;
 
   if (loggedInUser) {
     const userEventsWithUsers = await collection
       .aggregate([
-        { $match: { 'location.state': loggedInUser.state } },
         {
           $lookup: {
             from: 'users',
