@@ -4,6 +4,7 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "nodemon src/index.ts",
+    "build": "tsc",
     "lint": "eslint ."
   },
   "keywords": [],

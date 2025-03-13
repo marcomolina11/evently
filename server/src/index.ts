@@ -5,7 +5,6 @@ import { connectDB } from './db';
 import { User } from '@evently/shared';
 import { UserDocument } from './schemas/UserDocument';
 import { ObjectId } from 'mongodb';
-import { pipeline } from 'stream';
 
 dotenv.config();
 
