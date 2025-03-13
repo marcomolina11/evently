@@ -7,12 +7,15 @@ type EventDetails = {
   _id: string;
   name: string;
   date: string;
-  city: string;
-  state: string;
   hosts: string[];
   hostsUserDetails: Omit<User, 'password'>[];
   attendees: string[];
   attendeesUserDetails: Omit<User, 'password'>[];
+  location?: {
+    city: string;
+    state: string;
+    formattedAddress: string;
+  };
 } | null;
 
 const EventDetails = () => {
@@ -44,9 +47,11 @@ const EventDetails = () => {
     getEventDetails();
   }, [id]);
 
-  const hosts = event?.hostsUserDetails?.map((host) => {
-    return `${host.firstName} ${host.lastName}`;
-  });
+  const hosts = event?.hostsUserDetails
+    ?.map((host) => {
+      return `${host.firstName} ${host.lastName}`;
+    })
+    .join(', ');
 
   function formatDate(dateString: string): string {
     const [year, month, day] = dateString.split('-').map(Number);
@@ -65,9 +70,7 @@ const EventDetails = () => {
           <div className="event-description">
             <h2>{event.name}</h2>
             <p>{formatDate(event.date)}</p>
-            <p>
-              {event.city}, {event.state}
-            </p>
+            <p>{event.location && event.location.formattedAddress}</p>
             <p>Hosted by {hosts}</p>
             <p>Attendees: {event?.attendees.length}</p>
           </div>

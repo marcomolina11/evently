@@ -105,10 +105,24 @@ app.post('/events', async (req, res) => {
   const loggedInUser = req.body;
 
   if (loggedInUser) {
-    const cursor = collection.find({ state: loggedInUser.state });
-    const userEvents = await cursor.toArray();
+    const userEventsWithUsers = await collection
+      .aggregate([
+        { $match: { 'location.state': loggedInUser.state } },
+        {
+          $lookup: {
+            from: 'users',
+            let: { hostIds: '$hosts' },
+            pipeline: [
+              { $match: { $expr: { $in: ['$_id', '$$hostIds'] } } },
+              { $project: { firstName: 1, lastName: 1 } },
+            ],
+            as: 'hostsUserDetails',
+          },
+        },
+      ])
+      .toArray();
 
-    res.json(userEvents);
+    res.status(200).json(userEventsWithUsers);
   }
 });
 

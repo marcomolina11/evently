@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router';
+import { User } from '@evently/shared';
 
 type Event = {
   _id: string;
   name: string;
   date: string;
-  city: string;
-  state: string;
   hosts: string[];
+  hostsUserDetails: Omit<User, 'password'>[];
   attendees: string[];
+  location?: {
+    city: string;
+    state: string;
+    formattedAddress: string;
+  };
 };
 
 const Events = () => {
@@ -44,6 +49,12 @@ const Events = () => {
   }, [user]);
 
   const eventElements = events.map((event) => {
+    const hosts = event.hostsUserDetails
+      ?.map((host) => {
+        return `${host.firstName} ${host.lastName}`;
+      })
+      .join(', ');
+
     return (
       <Link
         to={`/events/${event._id}`}
@@ -53,10 +64,8 @@ const Events = () => {
         <div className="event-card">
           <h3>{event.name}</h3>
           <p>{formatDate(event.date)}</p>
-          <p>
-            {event.city}, {event.state}
-          </p>
-          <p>Hosted by Marco Molina</p>
+          <p>{event.location && event.location.formattedAddress}</p>
+          <p>Hosted by {hosts}</p>
         </div>
       </Link>
     );

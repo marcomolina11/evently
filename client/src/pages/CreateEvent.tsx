@@ -5,9 +5,12 @@ import { useNavigate } from 'react-router';
 type FormData = {
   name: string;
   date: string;
-  city: string;
-  state: string;
   hosts: string[];
+  location: {
+    city: string;
+    state: string;
+    formattedAddress: string;
+  };
 };
 
 const CreateEvent: React.FC = () => {
@@ -67,11 +70,25 @@ const CreateEvent: React.FC = () => {
         return;
       }
 
-      console.log('Selected Place:', {
-        name: place.name ?? 'Unknown',
-        address: place.formatted_address,
-        lat: place.geometry.location?.lat(),
-        lng: place.geometry.location?.lng(),
+      const stateComponent = place.address_components?.find((component) =>
+        component.types.includes('administrative_area_level_1')
+      );
+      const cityComponent = place.address_components?.find((component) =>
+        component.types.includes('locality')
+      );
+
+      const stateName = stateComponent ? stateComponent.short_name : '';
+      const cityName = cityComponent ? cityComponent.long_name : '';
+
+      setFormData((prevData) => {
+        return {
+          ...prevData,
+          location: {
+            city: cityName,
+            state: stateName,
+            formattedAddress: place.formatted_address ?? '',
+          },
+        };
       });
 
       console.log('Selected Place Complete:', place);
@@ -84,12 +101,15 @@ const CreateEvent: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     date: today,
-    city: '',
-    state: '',
     hosts: [user ? user._id : ''],
+    location: {
+      city: '',
+      state: '',
+      formattedAddress: '',
+    },
   });
 
-  //console.log(formData);
+  console.log(formData);
 
   function saveFormData(
     event:
@@ -126,10 +146,18 @@ const CreateEvent: React.FC = () => {
       setFormData({
         name: '',
         date: today,
-        city: '',
-        state: '',
         hosts: [],
+        location: {
+          city: '',
+          state: '',
+          formattedAddress: '',
+        },
       });
+
+      const locationInput = document.getElementById('location');
+      if (locationInput) {
+        locationInput.textContent = '';
+      }
 
       //wrapping in setTimeout to solve StrictMode redirect loop
       setTimeout(() => navigate('/events'), 0);
@@ -167,34 +195,13 @@ const CreateEvent: React.FC = () => {
             min={today}
           />
         </div>
-        <div className="form--location">
-          <label htmlFor="city">City</label>
-          <input
-            type="text"
-            id="city"
-            name="city"
-            value={formData.city}
-            onChange={(event) => saveFormData(event)}
-            required
-          />
-          <label htmlFor="state">State</label>
-          <select
-            id="state"
-            name="state"
-            value={formData.state}
-            onChange={(event) => saveFormData(event)}
-            required
-          >
-            <option value=""></option>
-            <option value="CA">CA</option>
-            <option value="FL">FL</option>
-          </select>
-        </div>
         <div>
           <label htmlFor="location">Location</label>
           <input
-            ref={locationInputRef}
             type="text"
+            id="location"
+            name="location"
+            ref={locationInputRef}
             placeholder="Search Locations"
           />
         </div>
