@@ -83,6 +83,52 @@ app.post('/login', async (req, res) => {
   res.status(200).json(responseObject);
 });
 
+// Update User
+app.post('/users/:id', async (req, res) => {
+  const db = await connectDB();
+  const collection = db.collection('users');
+  const { id } = req.params;
+  const user: Omit<User, 'password'> = req.body;
+
+  const userWithSameEmail = await collection.findOne({ email: user.email });
+
+  let responseObject: { message: string; data: object } = {
+    message: '',
+    data: {},
+  };
+
+  if (userWithSameEmail && String(userWithSameEmail?._id) !== id) {
+    responseObject = { ...responseObject, message: 'Email already exists' };
+    res.json(responseObject);
+    return;
+  } else {
+    try {
+      const result = await collection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: user }
+      );
+
+      console.log('Update operation result: ', result);
+
+      const options = {
+        projection: { password: 0 },
+      };
+      const updatedUser: UserDocument | null =
+        await collection.findOne<UserDocument>(new ObjectId(id), options);
+
+      if (updatedUser) {
+        responseObject = {
+          ...responseObject,
+          data: updatedUser,
+        };
+      }
+      res.status(200).json(responseObject);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+});
+
 // Get All Events
 app.post('/events', async (req, res) => {
   const db = await connectDB();
@@ -116,7 +162,6 @@ app.get('/events/:id', async (req, res) => {
   const collection = db.collection('events');
 
   const { id } = req.params;
-  console.log(id);
 
   const eventWithUsers = await collection
     .aggregate([

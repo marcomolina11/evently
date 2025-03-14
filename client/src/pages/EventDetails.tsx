@@ -38,7 +38,6 @@ const EventDetails = () => {
           throw new Error('Error fetching event details');
         }
         const data = await response.json();
-        console.log(data);
         setEvent(data);
       } catch (error) {
         console.error(error);

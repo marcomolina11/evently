@@ -17,11 +17,18 @@ const Header = () => {
         Evently
       </Link>
       <nav className="header--nav">
-        <Link to="/events">Events</Link>
+        <Link to="/events">
+          <div>Events Dashboard</div>
+        </Link>
+        <Link to={`/user/${user?._id}`}>
+          <div>Edit My Profile</div>
+        </Link>
       </nav>
       {user ? (
         <div>
-          <button onClick={handleLogout}>Log out</button>
+          <button className="btn--logout" onClick={handleLogout}>
+            Log out
+          </button>
         </div>
       ) : (
         <div>
