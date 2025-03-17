@@ -157,6 +157,7 @@ app.post('/events', async (req, res) => {
   }
 });
 
+// Get Event Details
 app.get('/events/:id', async (req, res) => {
   const db = await connectDB();
   const collection = db.collection('events');

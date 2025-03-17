@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router';
 import { AuthContext } from '../context/AuthContext.tsx';
 import { User } from '@evently/shared';
-import Home from '../pages/Home.tsx';
 import Events from '../pages/Events.tsx';
 import LayoutRoute from './LayoutRoute.tsx';
 import Login from '../pages/Login.tsx';
@@ -68,9 +67,8 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route element={<LayoutRoute />}>
-              <Route index element={<Home />} />
               <Route
-                path="/signup"
+                index
                 element={<Signup isGoogleLoaded={isGoogleLoaded} />}
               />
               <Route path="/login" element={<Login />} />

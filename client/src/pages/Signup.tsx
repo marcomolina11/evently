@@ -129,6 +129,7 @@ const Signup: React.FC<SignupProps> = ({ isGoogleLoaded }) => {
 
   return (
     <div>
+      <h1 className="form--title">Please sign up</h1>
       {isFormError && <p className="error">All fields are required</p>}
       {serverErrors &&
         serverErrors.map((error, index) => (
@@ -187,7 +188,7 @@ const Signup: React.FC<SignupProps> = ({ isGoogleLoaded }) => {
           />
         </div>
         <div>
-          <label htmlFor="passwordConfirmation">Password Confirmation</label>
+          <label htmlFor="passwordConfirmation">Confirm</label>
           <input
             type="password"
             id="passwordConfirmation"
@@ -205,7 +206,7 @@ const Signup: React.FC<SignupProps> = ({ isGoogleLoaded }) => {
             ))}
           </ul>
         )}
-        <button>Register</button>
+        <button>Sign up</button>
       </form>
     </div>
   );
