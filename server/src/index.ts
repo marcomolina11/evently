@@ -4,7 +4,8 @@ import dotenv from 'dotenv';
 import { connectDB } from './db';
 import { User } from '@evently/shared';
 import { UserDocument } from './schemas/UserDocument';
-import { ObjectId } from 'mongodb';
+import { ObjectId, Collection } from 'mongodb';
+import { EventDocument } from './schemas/EventDocument';
 
 dotenv.config();
 
@@ -150,6 +151,17 @@ app.post('/events', async (req, res) => {
             as: 'hostsUserDetails',
           },
         },
+        {
+          $lookup: {
+            from: 'users',
+            let: { attendeeIds: '$attendees' },
+            pipeline: [
+              { $match: { $expr: { $in: ['$_id', '$$attendeeIds'] } } },
+              { $project: { firstName: 1, lastName: 1 } },
+            ],
+            as: 'attendeesUserDetails',
+          },
+        },
       ])
       .toArray();
 
@@ -193,6 +205,69 @@ app.get('/events/:id', async (req, res) => {
     .toArray();
 
   res.status(200).json(eventWithUsers[0]);
+});
+
+// Join/Unjoin Event
+app.post('/events/:id', async (req, res) => {
+  const db = await connectDB();
+  const collection: Collection<EventDocument> = db.collection('events');
+  const { id } = req.params;
+  const { userId, alreadyJoined }: { userId: string; alreadyJoined: boolean } =
+    req.body;
+
+  try {
+    let result;
+    if (alreadyJoined) {
+      result = await collection.updateOne(
+        { _id: new ObjectId(id) },
+        { $pull: { attendees: new ObjectId(userId) } }
+      );
+    } else {
+      result = await collection.updateOne(
+        { _id: new ObjectId(id) },
+        { $addToSet: { attendees: new ObjectId(userId) } }
+      );
+    }
+
+    if (result.modifiedCount === 1) {
+      //fetch all events and send them back with users
+      // Duplicated code from GET /events route
+      //TODO: refactor into it's own function
+      const userEventsWithUsers = await collection
+        .aggregate([
+          {
+            $lookup: {
+              from: 'users',
+              let: { hostIds: '$hosts' },
+              pipeline: [
+                { $match: { $expr: { $in: ['$_id', '$$hostIds'] } } },
+                { $project: { firstName: 1, lastName: 1 } },
+              ],
+              as: 'hostsUserDetails',
+            },
+          },
+          {
+            $lookup: {
+              from: 'users',
+              let: { attendeeIds: '$attendees' },
+              pipeline: [
+                { $match: { $expr: { $in: ['$_id', '$$attendeeIds'] } } },
+                { $project: { firstName: 1, lastName: 1 } },
+              ],
+              as: 'attendeesUserDetails',
+            },
+          },
+        ])
+        .toArray();
+
+      res.status(200).json(userEventsWithUsers);
+    } else {
+      res.status(400).json(result);
+      throw new Error('Error updating event');
+    }
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 // Create Event

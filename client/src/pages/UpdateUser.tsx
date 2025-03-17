@@ -170,6 +170,7 @@ const UpdateUser: React.FC<UpdateUserProps> = ({ isGoogleLoaded }) => {
 
   return (
     <div>
+      <h1 className="form--title">Update your profile</h1>
       {isFormError && <p className="error">All fields are required</p>}
       {serverErrors &&
         serverErrors.map((error, index) => (
@@ -217,7 +218,7 @@ const UpdateUser: React.FC<UpdateUserProps> = ({ isGoogleLoaded }) => {
             id="location"
           />
         </div>
-        <button>Update</button>
+        <button>Save</button>
       </form>
     </div>
   );

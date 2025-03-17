@@ -177,10 +177,14 @@ ul.error {
 }
 
 .event-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   border: 1px solid #ebebeb;
   border-radius: 8px;
-  padding: 35px 15px;
+  padding: 25px 15px;
   margin-bottom: 20px;
+  height: 150px;
 }
 
 .event-card p {
@@ -206,4 +210,39 @@ ul.error {
 .event-description {
   text-align: left;
   margin-bottom: 20px;
+}
+
+.event-card-button-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.event-card-button-row button {
+  border-radius: 40px;
+  width: 90px;
+  font-size: 0.8rem;
+}
+
+.event-card--host-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.check-mark {
+  display: block;
+  font-size: 0.6rem;
+  line-height: 14px;
+}
+
+.btn-join {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.btn-join.joined {
+  background-color: grey;
 }

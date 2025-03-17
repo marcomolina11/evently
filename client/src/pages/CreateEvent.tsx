@@ -146,6 +146,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ isGoogleLoaded }) => {
 
   return (
     <>
+      <h1 className="form--title">Create event</h1>
       <form className="form--signup" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="name">Name</label>
