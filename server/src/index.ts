@@ -5,7 +5,6 @@ import { connectDB } from './db';
 import { User } from '@evently/shared';
 import { UserDocument } from './schemas/UserDocument';
 import { ObjectId } from 'mongodb';
-import { pipeline } from 'stream';
 
 dotenv.config();
 
@@ -19,24 +18,11 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
 });
 
-// Get All Users
-app.get('/', async (req, res) => {
-  const db = await connectDB();
-  const collection = db.collection('users');
-
-  const users = await collection.find().toArray();
-  res.json(users);
-});
-
 // Create/Signup User
 app.post('/users', async (req, res) => {
   const db = await connectDB();
   const collection = db.collection('users');
   const user: Omit<User, '_id'> = req.body;
-
-  // check if there's a user with that email already in DB
-  // if true, send back a message saying that email already exists
-  // else, create the user
 
   const emailExists = await collection.findOne({ email: user.email });
 
@@ -97,27 +83,86 @@ app.post('/login', async (req, res) => {
   res.status(200).json(responseObject);
 });
 
+// Update User
+app.post('/users/:id', async (req, res) => {
+  const db = await connectDB();
+  const collection = db.collection('users');
+  const { id } = req.params;
+  const user: Omit<User, 'password'> = req.body;
+
+  const userWithSameEmail = await collection.findOne({ email: user.email });
+
+  let responseObject: { message: string; data: object } = {
+    message: '',
+    data: {},
+  };
+
+  if (userWithSameEmail && String(userWithSameEmail?._id) !== id) {
+    responseObject = { ...responseObject, message: 'Email already exists' };
+    res.json(responseObject);
+    return;
+  } else {
+    try {
+      const result = await collection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: user }
+      );
+
+      console.log('Update operation result: ', result);
+
+      const options = {
+        projection: { password: 0 },
+      };
+      const updatedUser: UserDocument | null =
+        await collection.findOne<UserDocument>(new ObjectId(id), options);
+
+      if (updatedUser) {
+        responseObject = {
+          ...responseObject,
+          data: updatedUser,
+        };
+      }
+      res.status(200).json(responseObject);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+});
+
 // Get All Events
 app.post('/events', async (req, res) => {
   const db = await connectDB();
   const collection = db.collection('events');
 
-  const loggedInUser = req.body;
+  const loggedInUser: Omit<User, 'password'> | null = req.body;
 
   if (loggedInUser) {
-    const cursor = collection.find({ state: loggedInUser.state });
-    const userEvents = await cursor.toArray();
+    const userEventsWithUsers = await collection
+      .aggregate([
+        {
+          $lookup: {
+            from: 'users',
+            let: { hostIds: '$hosts' },
+            pipeline: [
+              { $match: { $expr: { $in: ['$_id', '$$hostIds'] } } },
+              { $project: { firstName: 1, lastName: 1 } },
+            ],
+            as: 'hostsUserDetails',
+          },
+        },
+      ])
+      .toArray();
 
-    res.json(userEvents);
+    res.status(200).json(userEventsWithUsers);
   }
 });
 
+// Get Event Details
 app.get('/events/:id', async (req, res) => {
   const db = await connectDB();
   const collection = db.collection('events');
 
   const { id } = req.params;
-  console.log(id);
 
   const eventWithUsers = await collection
     .aggregate([

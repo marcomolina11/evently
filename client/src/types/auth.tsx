@@ -1,4 +1,4 @@
-import { User } from "@evently/shared";
+import { User } from '@evently/shared';
 
 export type AuthContextType = {
   user: Omit<User, 'password'> | null;
@@ -7,25 +7,29 @@ export type AuthContextType = {
 
 export type SignupFormData = {
   firstName: string;
-  lastName: string; 
+  lastName: string;
   email: string;
-  city: string;
-  state: string;
   password: string;
   passwordConfirmation: string;
+  location: {
+    city: string;
+    state: string;
+  };
 };
 
 export const emptyFormData = {
   firstName: '',
   lastName: '',
   email: '',
-  city: '',
-  state: '',
   password: '',
   passwordConfirmation: '',
+  location: {
+    city: '',
+    state: '',
+  },
 };
 
 export type LoginFormData = {
-  email: string,
-  password: string
-}
+  email: string;
+  password: string;
+};

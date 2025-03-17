@@ -1,18 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router';
 
 type FormData = {
   name: string;
   date: string;
-  city: string;
-  state: string;
   hosts: string[];
+  location: {
+    city: string;
+    state: string;
+    formattedAddress: string;
+  };
 };
 
-const CreateEvent = () => {
+type CreateEventProps = {
+  isGoogleLoaded: boolean;
+};
+
+const CreateEvent: React.FC<CreateEventProps> = ({ isGoogleLoaded }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const locationInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -20,18 +28,62 @@ const CreateEvent = () => {
     }
   }, [user, navigate]);
 
+  useEffect(() => {
+    if (window.google && window.google.maps && window.google.maps.places) {
+      initAutocomplete();
+    }
+  }, [isGoogleLoaded]);
+
+  function initAutocomplete() {
+    if (!locationInputRef.current) return;
+
+    const autocomplete = new window.google.maps.places.Autocomplete(
+      locationInputRef.current
+    );
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry || !place.formatted_address) {
+        console.log('No details available for the selected location');
+        return;
+      }
+
+      const stateComponent = place.address_components?.find((component) =>
+        component.types.includes('administrative_area_level_1')
+      );
+      const cityComponent = place.address_components?.find((component) =>
+        component.types.includes('locality')
+      );
+
+      const stateName = stateComponent ? stateComponent.short_name : '';
+      const cityName = cityComponent ? cityComponent.long_name : '';
+
+      setFormData((prevData) => {
+        return {
+          ...prevData,
+          location: {
+            city: cityName,
+            state: stateName,
+            formattedAddress: place.formatted_address ?? '',
+          },
+        };
+      });
+    });
+  }
+
   const today = new Date().toISOString().split('T')[0];
 
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     date: today,
-    city: '',
-    state: '',
     hosts: [user ? user._id : ''],
+    location: {
+      city: '',
+      state: '',
+      formattedAddress: '',
+    },
   });
-
-  //console.log(formData);
 
   function saveFormData(
     event:
@@ -68,12 +120,21 @@ const CreateEvent = () => {
       setFormData({
         name: '',
         date: today,
-        city: '',
-        state: '',
         hosts: [],
+        location: {
+          city: '',
+          state: '',
+          formattedAddress: '',
+        },
       });
 
+      const locationInput = document.getElementById('location');
+      if (locationInput) {
+        locationInput.textContent = '';
+      }
+
       //wrapping in setTimeout to solve StrictMode redirect loop
+      // TODO: navigate to the eventDetails page instead
       setTimeout(() => navigate('/events'), 0);
 
       // TODO: redirect to event details page instead of all events page
@@ -109,28 +170,15 @@ const CreateEvent = () => {
             min={today}
           />
         </div>
-        <div className="form--location">
-          <label htmlFor="city">City</label>
+        <div>
+          <label htmlFor="location">Location</label>
           <input
             type="text"
-            id="city"
-            name="city"
-            value={formData.city}
-            onChange={(event) => saveFormData(event)}
-            required
+            id="location"
+            name="location"
+            ref={locationInputRef}
+            placeholder="Search Locations"
           />
-          <label htmlFor="state">State</label>
-          <select
-            id="state"
-            name="state"
-            value={formData.state}
-            onChange={(event) => saveFormData(event)}
-            required
-          >
-            <option value=""></option>
-            <option value="CA">CA</option>
-            <option value="FL">FL</option>
-          </select>
         </div>
         {formErrors.length > 0 && (
           <ul className="error">

@@ -1,29 +1,37 @@
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { emptyFormData, SignupFormData } from '../types/auth';
-import { usePasswordValidation } from '../hooks/usePasswordValidation';
+import { emptyUpdateUserFormData, UpdateUserFormData } from '../types/update';
+import { useNavigate } from 'react-router';
 import { User } from '@evently/shared';
 
-type SignupProps = {
+type UpdateUserProps = {
   isGoogleLoaded: boolean;
 };
 
-const Signup: React.FC<SignupProps> = ({ isGoogleLoaded }) => {
-  const [formData, setFormData] = useState<SignupFormData>(emptyFormData);
+const UpdateUser: React.FC<UpdateUserProps> = ({ isGoogleLoaded }) => {
+  const { user, setUser } = useAuth();
+  const [formData, setFormData] = useState<UpdateUserFormData>({
+    firstName: user?.firstName ?? '',
+    lastName: user?.lastName ?? '',
+    email: user?.email ?? '',
+    location: {
+      city: user?.location.city ?? '',
+      state: user?.location.state ?? '',
+    },
+  });
   const [isFormError, setIsFormError] = useState(false);
   const [serverErrors, setServerErrors] = useState<string[]>([]);
-  const { setUser } = useAuth();
   const navigate = useNavigate();
-  const locationInputRef = useRef(null);
+  const locationInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (window.google && window.google.maps && window.google.maps.places) {
-      initAutocomplete();
+    if (!user) {
+      navigate('/login');
     }
-  }, [isGoogleLoaded]);
+  }, [user, navigate]);
 
-  function initAutocomplete() {
+  const defaultAddress = `${user?.location.city}, ${user?.location.state}`;
+  const initAutocomplete = useCallback(() => {
     if (!locationInputRef.current) return;
 
     const autocomplete = new window.google.maps.places.Autocomplete(
@@ -60,12 +68,44 @@ const Signup: React.FC<SignupProps> = ({ isGoogleLoaded }) => {
         };
       });
     });
-  }
 
-  const passwordErrors = usePasswordValidation(
-    formData.password,
-    formData.passwordConfirmation
-  );
+    // Programmatically set the default place on page load
+    setTimeout(() => {
+      if (locationInputRef.current) {
+        locationInputRef.current.value = defaultAddress; // Set input value
+        triggerPlaceSelection(defaultAddress, autocomplete);
+      }
+    }, 500); // Delay to ensure Autocomplete is initialized
+  }, [defaultAddress]);
+
+  useEffect(() => {
+    if (window.google && window.google.maps && window.google.maps.places) {
+      initAutocomplete();
+    }
+  }, [isGoogleLoaded, initAutocomplete]);
+
+  // Trigger Autocomplete Selection for Default Place
+  async function triggerPlaceSelection(
+    address: string,
+    autocomplete: google.maps.places.Autocomplete
+  ) {
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ address }, (results, status) => {
+      if (status === 'OK' && results?.length) {
+        const place = results[0];
+
+        // Manually set the place details inside Autocomplete
+        Object.defineProperty(autocomplete, 'getPlace', {
+          value: () => place,
+        });
+
+        // Trigger 'place_changed' event
+        google.maps.event.trigger(autocomplete, 'place_changed');
+      } else {
+        console.error('Geocode failed:', status);
+      }
+    });
+  }
 
   function saveFormData(
     event:
@@ -94,16 +134,17 @@ const Signup: React.FC<SignupProps> = ({ isGoogleLoaded }) => {
     const isFormDataValid = validateFormData();
 
     if (isFormDataValid) {
-      const { passwordConfirmation: _, ...payload } = formData;
-      void _;
       try {
-        const response = await fetch('http://localhost:3000/users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
+        const response = await fetch(
+          `http://localhost:3000/users/${user?._id}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+          }
+        );
 
         if (!response.ok) {
           throw new Error('Response was not ok');
@@ -117,7 +158,7 @@ const Signup: React.FC<SignupProps> = ({ isGoogleLoaded }) => {
           return;
         } else {
           setUser(data.data);
-          setFormData(emptyFormData);
+          setFormData(emptyUpdateUserFormData);
           //wrapping in setTimeout to solve StrictMode redirect loop
           setTimeout(() => navigate('/events'), 0);
         }
@@ -129,7 +170,6 @@ const Signup: React.FC<SignupProps> = ({ isGoogleLoaded }) => {
 
   return (
     <div>
-      <h1 className="form--title">Please sign up</h1>
       {isFormError && <p className="error">All fields are required</p>}
       {serverErrors &&
         serverErrors.map((error, index) => (
@@ -177,39 +217,10 @@ const Signup: React.FC<SignupProps> = ({ isGoogleLoaded }) => {
             id="location"
           />
         </div>
-        <div>
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={(event) => saveFormData(event)}
-          />
-        </div>
-        <div>
-          <label htmlFor="passwordConfirmation">Confirm</label>
-          <input
-            type="password"
-            id="passwordConfirmation"
-            name="passwordConfirmation"
-            value={formData.passwordConfirmation}
-            onChange={(event) => saveFormData(event)}
-          />
-        </div>
-        {passwordErrors.length > 0 && (
-          <ul className="error">
-            {passwordErrors.map((error, index) => (
-              <li key={index} className="error">
-                {error}
-              </li>
-            ))}
-          </ul>
-        )}
-        <button>Sign up</button>
+        <button>Update</button>
       </form>
     </div>
   );
 };
 
-export default Signup;
+export default UpdateUser;

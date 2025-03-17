@@ -36,13 +36,14 @@ h1 {
 }
 
 button {
+  color: white;
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.4em 1em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #f9f9f9;
+  background-color: black;
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -68,7 +69,43 @@ header {
 
 .header--nav {
   display: flex;
+  gap: 20px;
   align-items: center;
+}
+
+.header--nav a {
+  text-decoration: none;
+  color: black;
+}
+
+.header--nav a div {
+  padding: 8px 16px;
+  border-radius: 40px;
+  font-weight: 300;
+}
+
+.header--nav a div:hover {
+  background-color: #f7f7f7;
+}
+
+.header--nav a.selected div {
+  padding: 8px 16px;
+  border-radius: 40px;
+  font-weight: 500;
+}
+
+.header--nav a.selected div:hover {
+  background-color: transparent;
+}
+
+.header--auth-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+button.btn--nav-button {
+  color: black;
+  background-color: #f7f7f7;
 }
 
 .logo--image {
@@ -80,20 +117,31 @@ header {
   display: flex;
   flex-direction: column;
   margin: 0 auto;
-  width: 500px;
-  align-items: center;
+  width: 400px;
+  gap: 15px;
+}
+
+.form--title {
+  font-size: 1.5rem;
+  margin-bottom: 25px;
 }
 
 .form--signup label {
-  margin: 0 10px;
+  text-align: left;
 }
 
 .form--signup div {
   padding: 5px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.form--signup input {
+  width: 75%;
 }
 
 .form--signup button {
-  width: 200px;
+  width: 100%;
 }
 
 .error {
