@@ -82,7 +82,7 @@ const Events = () => {
   ) {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Editing event: ', eventId);
+    navigate(`/events/edit/${eventId}`);
   }
 
   function handleEventDelete(

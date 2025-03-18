@@ -9,6 +9,7 @@ import Signup from '../pages/Signup.tsx';
 import CreateEvent from '../pages/CreateEvent.tsx';
 import EventDetails from '../pages/EventDetails.tsx';
 import UpdateUser from '../pages/UpdateUser.tsx';
+import EditEvent from '../pages/EditEvent.tsx';
 
 const loadGoogleMapsAPI = () => {
   return new Promise<void>((resolve, reject) => {
@@ -81,6 +82,10 @@ const App = () => {
               <Route
                 path="/user/:id"
                 element={<UpdateUser isGoogleLoaded={isGoogleLoaded} />}
+              />
+              <Route
+                path="/events/edit/:id"
+                element={<EditEvent isGoogleLoaded={isGoogleLoaded} />}
               />
             </Route>
           </Routes>

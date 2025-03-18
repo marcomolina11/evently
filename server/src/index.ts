@@ -313,3 +313,23 @@ app.delete('/events/:id', async (req, res) => {
     console.error(error);
   }
 });
+
+// Edit Event
+app.patch('/events/:id', async (req, res) => {
+  const db = await connectDB();
+  const collection = db.collection('events');
+  const { id } = req.params;
+  const eventData = req.body;
+
+  try {
+    const result = await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: eventData }
+    );
+
+    res.status(200).json({ result });
+  } catch (error) {
+    res.status(500);
+    console.log(error);
+  }
+});
