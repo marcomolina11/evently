@@ -293,3 +293,23 @@ app.post('/create-event', async (req, res) => {
     console.error(error);
   }
 });
+
+// Delete Event
+app.delete('/events/:id', async (req, res) => {
+  const db = await connectDB();
+  const collection = db.collection('events');
+  const { id } = req.params;
+
+  try {
+    const result = await collection.deleteOne({ _id: new ObjectId(id) });
+    if (result.deletedCount === 1) {
+      console.log('Successfully deleted one document.');
+      res.status(200).json(result);
+    } else {
+      res.status(500);
+      throw new Error('No documents matched the query. Deleted 0 documents.');
+    }
+  } catch (error) {
+    console.error(error);
+  }
+});

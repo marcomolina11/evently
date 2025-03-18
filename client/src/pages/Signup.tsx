@@ -13,9 +13,15 @@ const Signup: React.FC<SignupProps> = ({ isGoogleLoaded }) => {
   const [formData, setFormData] = useState<SignupFormData>(emptyFormData);
   const [isFormError, setIsFormError] = useState(false);
   const [serverErrors, setServerErrors] = useState<string[]>([]);
-  const { setUser } = useAuth();
+  const { user, setUser } = useAuth();
   const navigate = useNavigate();
   const locationInputRef = useRef(null);
+
+  useEffect(() => {
+    if (user) {
+      navigate('/events');
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     if (window.google && window.google.maps && window.google.maps.places) {

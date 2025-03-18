@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Link, useNavigate } from 'react-router';
 import EventCard from '../components/EventCard';
@@ -15,32 +15,32 @@ const Events = () => {
     }
   }, [user, navigate]);
 
-  useEffect(() => {
-    async function getEvents() {
-      try {
-        const response = await fetch('http://localhost:3000/events', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(user),
-        });
+  const getEvents = useCallback(async () => {
+    try {
+      const response = await fetch('http://localhost:3000/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(user),
+      });
 
-        if (!response.ok) {
-          throw new Error('Error fetching events');
-        }
-
-        const data: Event[] = await response.json();
-
-        setEvents(data);
-      } catch (error) {
-        console.log(error);
+      if (!response.ok) {
+        throw new Error('Error fetching events');
       }
+
+      const data: Event[] = await response.json();
+      setEvents(data);
+    } catch (error) {
+      console.log(error);
     }
+  }, [user]);
+
+  useEffect(() => {
     if (user) {
       getEvents();
     }
-  }, [user]);
+  }, [user, getEvents]);
 
   function handleEventJoin(
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
@@ -70,8 +70,7 @@ const Events = () => {
         throw new Error('Error joining event');
       }
 
-      const data: Event[] = await response.json();
-      setEvents(data);
+      getEvents();
     } catch (error) {
       console.log(error);
     }
@@ -93,8 +92,27 @@ const Events = () => {
     e.preventDefault();
     e.stopPropagation();
     console.log('Deleting event: ', eventId);
+    deleteEvent(eventId);
   }
 
+  async function deleteEvent(eventId: string) {
+    try {
+      const response = await fetch(`http://localhost:3000/events/${eventId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error deleting the event');
+      }
+
+      getEvents();
+    } catch (error) {
+      console.log(error);
+    }
+  }
   const eventElements = events.map((event) => {
     return (
       <EventCard

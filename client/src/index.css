@@ -165,7 +165,7 @@ ul.error {
 .events-container {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 16px;
   margin: 0 auto;
   margin-bottom: 40px;
   width: 80%;
@@ -183,7 +183,6 @@ ul.error {
   border: 1px solid #ebebeb;
   border-radius: 8px;
   padding: 25px 15px;
-  margin-bottom: 20px;
   height: 150px;
 }
 
