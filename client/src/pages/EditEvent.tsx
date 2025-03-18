@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
+import { User } from '@evently/shared';
 
 type FormData = {
   name: string;
   date: string;
-  hosts: string[];
   location: {
     city: string;
     state: string;
@@ -13,14 +13,41 @@ type FormData = {
   };
 };
 
-type CreateEventProps = {
+type EventDetails = {
+  _id: string;
+  name: string;
+  date: string;
+  hosts: string[];
+  hostsUserDetails: Omit<User, 'password'>[];
+  attendees: string[];
+  attendeesUserDetails: Omit<User, 'password'>[];
+  location: {
+    city: string;
+    state: string;
+    formattedAddress: string;
+  };
+};
+
+type EditEventProps = {
   isGoogleLoaded: boolean;
 };
 
-const CreateEvent: React.FC<CreateEventProps> = ({ isGoogleLoaded }) => {
+const EditEvent: React.FC<EditEventProps> = ({ isGoogleLoaded }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const locationInputRef = useRef<HTMLInputElement | null>(null);
+  const { id } = useParams();
+  const today = new Date().toISOString().split('T')[0];
+  const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    date: today,
+    location: {
+      city: '',
+      state: '',
+      formattedAddress: '',
+    },
+  });
 
   useEffect(() => {
     if (!user) {
@@ -29,12 +56,26 @@ const CreateEvent: React.FC<CreateEventProps> = ({ isGoogleLoaded }) => {
   }, [user, navigate]);
 
   useEffect(() => {
-    if (window.google && window.google.maps && window.google.maps.places) {
-      initAutocomplete();
+    async function getEventDetails() {
+      try {
+        const response = await fetch(`http://localhost:3000/events/${id}`);
+        if (!response.ok) {
+          throw new Error('Error fetching event details');
+        }
+        const { name, date, location }: EventDetails = await response.json();
+        setFormData({ name, date, location });
+        setDefaultAddress(location.formattedAddress);
+      } catch (error) {
+        console.error(error);
+      }
     }
-  }, [isGoogleLoaded]);
+    getEventDetails();
+  }, [id]);
 
-  function initAutocomplete() {
+  const [defaultAddress, setDefaultAddress] = useState('');
+
+  // const defaultAddress = formData.location.formattedAddress;
+  const initAutocomplete = useCallback(() => {
     if (!locationInputRef.current) return;
 
     const autocomplete = new window.google.maps.places.Autocomplete(
@@ -43,6 +84,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ isGoogleLoaded }) => {
 
     autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
+
       if (!place.geometry || !place.formatted_address) {
         console.log('No details available for the selected location');
         return;
@@ -58,32 +100,29 @@ const CreateEvent: React.FC<CreateEventProps> = ({ isGoogleLoaded }) => {
       const stateName = stateComponent ? stateComponent.short_name : '';
       const cityName = cityComponent ? cityComponent.long_name : '';
 
-      setFormData((prevData) => {
-        return {
-          ...prevData,
-          location: {
-            city: cityName,
-            state: stateName,
-            formattedAddress: place.formatted_address ?? '',
-          },
-        };
-      });
+      setFormData((prevData) => ({
+        ...prevData,
+        location: {
+          city: cityName,
+          state: stateName,
+          formattedAddress: place.formatted_address ?? '',
+        },
+      }));
     });
-  }
 
-  const today = new Date().toISOString().split('T')[0];
+    // Programmatically set the default place on page load
+    setTimeout(() => {
+      if (locationInputRef.current) {
+        locationInputRef.current.value = defaultAddress; // Set input value
+      }
+    }, 0); // Delay to ensure Autocomplete is initialized
+  }, [defaultAddress, locationInputRef]);
 
-  const [formErrors, setFormErrors] = useState<string[]>([]);
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    date: today,
-    hosts: [user ? user._id : ''],
-    location: {
-      city: '',
-      state: '',
-      formattedAddress: '',
-    },
-  });
+  useEffect(() => {
+    if (window.google && window.google.maps && window.google.maps.places) {
+      initAutocomplete();
+    }
+  }, [isGoogleLoaded, initAutocomplete]);
 
   function saveFormData(
     event:
@@ -100,9 +139,11 @@ const CreateEvent: React.FC<CreateEventProps> = ({ isGoogleLoaded }) => {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    console.log('formData before api call: ', formData);
+
     try {
-      const response = await fetch('http://localhost:3000/create-event', {
-        method: 'POST',
+      const response = await fetch(`http://localhost:3000/events/${id}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -113,14 +154,11 @@ const CreateEvent: React.FC<CreateEventProps> = ({ isGoogleLoaded }) => {
         throw new Error('Error creating event');
       }
 
-      const data = await response.json();
-
-      console.log('response data: ', data);
+      await response.json();
 
       setFormData({
         name: '',
         date: today,
-        hosts: [],
         location: {
           city: '',
           state: '',
@@ -134,19 +172,16 @@ const CreateEvent: React.FC<CreateEventProps> = ({ isGoogleLoaded }) => {
       }
 
       //wrapping in setTimeout to solve StrictMode redirect loop
-      // TODO: navigate to the eventDetails page instead
-      setTimeout(() => navigate('/events'), 0);
-
-      // TODO: redirect to event details page instead of all events page
+      setTimeout(() => navigate(`/events`), 0);
     } catch (error) {
       console.log(error);
-      setFormErrors(['Error creating the event']);
+      setFormErrors(['Error editing the event']);
     }
   }
 
   return (
     <>
-      <h1 className="form--title">Create event</h1>
+      <h1 className="form--title">Edit event</h1>
       <form className="form--signup" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="name">Name</label>
@@ -175,10 +210,9 @@ const CreateEvent: React.FC<CreateEventProps> = ({ isGoogleLoaded }) => {
           <label htmlFor="location">Location</label>
           <input
             type="text"
+            ref={locationInputRef}
             id="location"
             name="location"
-            ref={locationInputRef}
-            placeholder="Search Locations"
           />
         </div>
         {formErrors.length > 0 && (
@@ -190,10 +224,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({ isGoogleLoaded }) => {
             ))}
           </ul>
         )}
-        <button>Create</button>
+        <button>Save</button>
       </form>
     </>
   );
 };
 
-export default CreateEvent;
+export default EditEvent;

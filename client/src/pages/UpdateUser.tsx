@@ -73,9 +73,8 @@ const UpdateUser: React.FC<UpdateUserProps> = ({ isGoogleLoaded }) => {
     setTimeout(() => {
       if (locationInputRef.current) {
         locationInputRef.current.value = defaultAddress; // Set input value
-        triggerPlaceSelection(defaultAddress, autocomplete);
       }
-    }, 500); // Delay to ensure Autocomplete is initialized
+    }, 0); // Delay to ensure Autocomplete is initialized
   }, [defaultAddress]);
 
   useEffect(() => {
@@ -83,29 +82,6 @@ const UpdateUser: React.FC<UpdateUserProps> = ({ isGoogleLoaded }) => {
       initAutocomplete();
     }
   }, [isGoogleLoaded, initAutocomplete]);
-
-  // Trigger Autocomplete Selection for Default Place
-  async function triggerPlaceSelection(
-    address: string,
-    autocomplete: google.maps.places.Autocomplete
-  ) {
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ address }, (results, status) => {
-      if (status === 'OK' && results?.length) {
-        const place = results[0];
-
-        // Manually set the place details inside Autocomplete
-        Object.defineProperty(autocomplete, 'getPlace', {
-          value: () => place,
-        });
-
-        // Trigger 'place_changed' event
-        google.maps.event.trigger(autocomplete, 'place_changed');
-      } else {
-        console.error('Geocode failed:', status);
-      }
-    });
-  }
 
   function saveFormData(
     event:
@@ -170,6 +146,7 @@ const UpdateUser: React.FC<UpdateUserProps> = ({ isGoogleLoaded }) => {
 
   return (
     <div>
+      <h1 className="form--title">Update your profile</h1>
       {isFormError && <p className="error">All fields are required</p>}
       {serverErrors &&
         serverErrors.map((error, index) => (
@@ -217,7 +194,7 @@ const UpdateUser: React.FC<UpdateUserProps> = ({ isGoogleLoaded }) => {
             id="location"
           />
         </div>
-        <button>Update</button>
+        <button>Save</button>
       </form>
     </div>
   );

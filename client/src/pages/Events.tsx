@@ -1,21 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Link, useNavigate } from 'react-router';
-import { User } from '@evently/shared';
-
-type Event = {
-  _id: string;
-  name: string;
-  date: string;
-  hosts: string[];
-  hostsUserDetails: Omit<User, 'password'>[];
-  attendees: string[];
-  location?: {
-    city: string;
-    state: string;
-    formattedAddress: string;
-  };
-};
+import EventCard from '../components/EventCard';
+import { Event } from '../types/event';
 
 const Events = () => {
   const { user } = useAuth();
@@ -28,65 +15,115 @@ const Events = () => {
     }
   }, [user, navigate]);
 
-  useEffect(() => {
-    async function getEvents() {
-      try {
-        const response = await fetch('http://localhost:3000/events', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(user),
-        });
+  const getEvents = useCallback(async () => {
+    try {
+      const response = await fetch('http://localhost:3000/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(user),
+      });
 
-        if (!response.ok) {
-          throw new Error('Error fetching events');
-        }
-
-        const data: Event[] = await response.json();
-
-        setEvents(data);
-      } catch (error) {
-        console.log(error);
+      if (!response.ok) {
+        throw new Error('Error fetching events');
       }
-    }
-    if (user) {
-      getEvents();
+
+      const data: Event[] = await response.json();
+      setEvents(data);
+    } catch (error) {
+      console.log(error);
     }
   }, [user]);
 
-  const eventElements = events.map((event) => {
-    const hosts = event.hostsUserDetails
-      ?.map((host) => {
-        return `${host.firstName} ${host.lastName}`;
-      })
-      .join(', ');
+  useEffect(() => {
+    if (user) {
+      getEvents();
+    }
+  }, [user, getEvents]);
 
+  function handleEventJoin(
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+    eventId: string,
+    alreadyJoined: boolean
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+    joinEvent(eventId, user?._id, alreadyJoined);
+  }
+
+  async function joinEvent(
+    eventId: string,
+    userId: string | undefined,
+    alreadyJoined: boolean
+  ) {
+    try {
+      const response = await fetch(`http://localhost:3000/events/${eventId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, alreadyJoined }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error joining event');
+      }
+
+      getEvents();
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  function handleEventEdit(
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+    eventId: string
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/events/edit/${eventId}`);
+  }
+
+  function handleEventDelete(
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+    eventId: string
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Deleting event: ', eventId);
+    deleteEvent(eventId);
+  }
+
+  async function deleteEvent(eventId: string) {
+    try {
+      const response = await fetch(`http://localhost:3000/events/${eventId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error deleting the event');
+      }
+
+      getEvents();
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  const eventElements = events.map((event) => {
     return (
-      <Link
-        to={`/events/${event._id}`}
+      <EventCard
         key={event._id}
-        className="event-card-wrapper"
-      >
-        <div className="event-card">
-          <h3>{event.name}</h3>
-          <p>{formatDate(event.date)}</p>
-          <p>{event.location && event.location.formattedAddress}</p>
-          <p>Hosted by {hosts}</p>
-        </div>
-      </Link>
+        event={event}
+        handleEventJoin={handleEventJoin}
+        handleEventEdit={handleEventEdit}
+        handleEventDelete={handleEventDelete}
+      />
     );
   });
-
-  function formatDate(dateString: string): string {
-    const [year, month, day] = dateString.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(date);
-  }
 
   return (
     <>
